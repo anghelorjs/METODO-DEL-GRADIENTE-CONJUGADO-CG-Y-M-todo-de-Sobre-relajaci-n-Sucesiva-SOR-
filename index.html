@@ -1,185 +1,346 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Método del Gradiente Conjugado — Demo Neon</title>
-  <style>
-    :root {
-      --bg: #05060a;
-      --panel: #0c0f1a;
-      --text: #e7f5ff;
-      --muted: #a7b3c4;
-      --neon1: #00e5ff;
-      --neon2: #7cff00;
-      --neon3: #ff00f0;
-      --accent: #37f499;
-      --danger: #ff5577;
-    }
-    * { box-sizing: border-box; }
-    html, body { height: 100%; }
-    body {
-      margin: 0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial;
-      color: var(--text);
-      background: radial-gradient(1000px 600px at 10% 10%, rgba(0,229,255,.08), transparent 50%),
-                  radial-gradient(800px 500px at 90% 10%, rgba(255,0,240,.08), transparent 50%),
-                  radial-gradient(1200px 700px at 50% 100%, rgba(124,255,0,.08), transparent 50%),
-                  var(--bg);
-      overflow-x: hidden;
-    }
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1" />
+        <title>Método del Gradiente Conjugado — Demo Neon</title>
+        <style>
+            :root {
+                --bg: #05060a;
+                --panel: #0c0f1a;
+                --text: #e7f5ff;
+                --muted: #a7b3c4;
+                --neon1: #00e5ff;
+                --neon2: #7cff00;
+                --neon3: #ff00f0;
+                --accent: #37f499;
+                --danger: #ff5577;
+            }
+            * {
+                box-sizing: border-box;
+            }
+            html,
+            body {
+                height: 100%;
+            }
+            body {
+                margin: 0;
+                font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial;
+                color: var(--text);
+                background: radial-gradient(1000px 600px at 10% 10%, rgba(0, 229, 255, 0.08), transparent 50%), radial-gradient(800px 500px at 90% 10%, rgba(255, 0, 240, 0.08), transparent 50%),
+                    radial-gradient(1200px 700px at 50% 100%, rgba(124, 255, 0, 0.08), transparent 50%), var(--bg);
+                overflow-x: hidden;
+            }
 
-    /* Glow helpers */
-    .glow {
-      text-shadow: 0 0 12px rgba(55,244,153,.6), 0 0 40px rgba(0,229,255,.25);
-    }
-    .neon-border {
-      border: 1px solid rgba(255,255,255,.12);
-      box-shadow: inset 0 0 18px rgba(255,255,255,.04), 0 0 24px rgba(0,229,255,.12), 0 0 64px rgba(255,0,240,.08);
-      border-radius: 16px;
-      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.01));
-      backdrop-filter: blur(6px);
-    }
+            /* Glow helpers */
+            .glow {
+                text-shadow: 0 0 12px rgba(55, 244, 153, 0.6), 0 0 40px rgba(0, 229, 255, 0.25);
+            }
+            .neon-border {
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                box-shadow: inset 0 0 18px rgba(255, 255, 255, 0.04), 0 0 24px rgba(0, 229, 255, 0.12), 0 0 64px rgba(255, 0, 240, 0.08);
+                border-radius: 16px;
+                background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01));
+                backdrop-filter: blur(6px);
+            }
 
-    header {
-      padding: 48px 20px 24px;
-      text-align: center;
-      position: relative;
-    }
-    header h1 {
-      font-size: clamp(28px, 5vw, 48px);
-      line-height: 1.05;
-      margin: 0 0 10px;
-      background: linear-gradient(90deg, var(--neon1), var(--neon3), var(--neon2));
-      -webkit-background-clip: text; background-clip: text; color: transparent;
-      filter: drop-shadow(0 0 15px rgba(0,229,255,.35));
-      animation: hue 12s linear infinite;
-    }
-    header p { color: var(--muted); margin: 0 auto; max-width: 900px; }
+            header {
+                padding: 48px 20px 24px;
+                text-align: center;
+                position: relative;
+            }
+            header h1 {
+                font-size: clamp(28px, 5vw, 48px);
+                line-height: 1.05;
+                margin: 0 0 10px;
+                background: linear-gradient(90deg, var(--neon1), var(--neon3), var(--neon2));
+                -webkit-background-clip: text;
+                background-clip: text;
+                color: transparent;
+                filter: drop-shadow(0 0 15px rgba(0, 229, 255, 0.35));
+                animation: hue 12s linear infinite;
+            }
+            header p {
+                color: var(--muted);
+                margin: 0 auto;
+                max-width: 900px;
+            }
 
-    @keyframes hue { from { filter: hue-rotate(0deg) drop-shadow(0 0 15px rgba(0,229,255,.35)); } to { filter: hue-rotate(360deg) drop-shadow(0 0 15px rgba(0,229,255,.35)); } }
+            @keyframes hue {
+                from {
+                    filter: hue-rotate(0deg) drop-shadow(0 0 15px rgba(0, 229, 255, 0.35));
+                }
+                to {
+                    filter: hue-rotate(360deg) drop-shadow(0 0 15px rgba(0, 229, 255, 0.35));
+                }
+            }
 
-    .grid {
-      display: grid; gap: 18px; padding: 20px; max-width: 1200px; margin: 0 auto 80px;
-      grid-template-columns: 1.1fr .9fr;
-    }
-    @media (max-width: 980px){ .grid { grid-template-columns: 1fr; } }
+            .grid {
+                display: grid;
+                gap: 18px;
+                padding: 20px;
+                max-width: 1200px;
+                margin: 0 auto 80px;
+                grid-template-columns: 1.1fr 0.9fr;
+            }
+            @media (max-width: 980px) {
+                .grid {
+                    grid-template-columns: 1fr;
+                }
+            }
 
-    .card { padding: 18px; }
-    .card h2 { margin: 6px 0 12px; font-size: 20px; letter-spacing: .2px; }
-    .card p, .card li { color: var(--muted); }
-    .card ul { padding-left: 18px; }
+            .card {
+                padding: 18px;
+            }
+            .card h2 {
+                margin: 6px 0 12px;
+                font-size: 20px;
+                letter-spacing: 0.2px;
+            }
+            .card p,
+            .card li {
+                color: var(--muted);
+            }
+            .card ul {
+                padding-left: 18px;
+            }
 
-    .controls { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; margin-top: 8px; }
-    .controls label { display: grid; gap: 6px; font-size: 12px; color: var(--muted); }
-    .controls input[type="number"], .controls input[type="range"], .controls input[type="text"] {
-      background: #0a0d16; border: 1px solid rgba(255,255,255,.12); color: var(--text);
-      padding: 10px 12px; border-radius: 12px; outline: none;
-      transition: box-shadow .2s ease, border-color .2s ease;
-    }
-    .controls input:focus { border-color: var(--neon1); box-shadow: 0 0 0 6px rgba(0,229,255,.12); }
+            .controls {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 10px;
+                margin-top: 8px;
+            }
+            .controls label {
+                display: grid;
+                gap: 6px;
+                font-size: 12px;
+                color: var(--muted);
+            }
+            .controls input[type="number"],
+            .controls input[type="range"],
+            .controls input[type="text"] {
+                background: #0a0d16;
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                color: var(--text);
+                padding: 10px 12px;
+                border-radius: 12px;
+                outline: none;
+                transition: box-shadow 0.2s ease, border-color 0.2s ease;
+            }
+            .controls input:focus {
+                border-color: var(--neon1);
+                box-shadow: 0 0 0 6px rgba(0, 229, 255, 0.12);
+            }
 
-    .buttons { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
-    .btn {
-      cursor: pointer; border: none; color: var(--text); padding: 10px 14px; border-radius: 12px; font-weight: 600; letter-spacing: .2px;
-      background: radial-gradient(120% 120% at 20% 20%, rgba(0,229,255,.20), rgba(255,0,240,.10)), #0e1220;
-      outline: 1px solid rgba(255,255,255,.12);
-      transition: transform .06s ease, box-shadow .2s ease, outline-color .2s ease;
-      box-shadow: 0 0 20px rgba(0,229,255,.18), 0 2px 12px rgba(0,0,0,.4);
-    }
-    .btn:hover { outline-color: var(--accent); box-shadow: 0 0 30px rgba(55,244,153,.35); }
-    .btn:active { transform: translateY(1px) scale(.98); }
-    .btn.danger:hover { outline-color: var(--danger); box-shadow: 0 0 30px rgba(255,85,119,.35); }
+            .buttons {
+                display: flex;
+                gap: 10px;
+                flex-wrap: wrap;
+                margin-top: 10px;
+            }
+            .btn {
+                cursor: pointer;
+                border: none;
+                color: var(--text);
+                padding: 10px 14px;
+                border-radius: 12px;
+                font-weight: 600;
+                letter-spacing: 0.2px;
+                background: radial-gradient(120% 120% at 20% 20%, rgba(0, 229, 255, 0.2), rgba(255, 0, 240, 0.1)), #0e1220;
+                outline: 1px solid rgba(255, 255, 255, 0.12);
+                transition: transform 0.06s ease, box-shadow 0.2s ease, outline-color 0.2s ease;
+                box-shadow: 0 0 20px rgba(0, 229, 255, 0.18), 0 2px 12px rgba(0, 0, 0, 0.4);
+            }
+            .btn:hover {
+                outline-color: var(--accent);
+                box-shadow: 0 0 30px rgba(55, 244, 153, 0.35);
+            }
+            .btn:active {
+                transform: translateY(1px) scale(0.98);
+            }
+            .btn.danger:hover {
+                outline-color: var(--danger);
+                box-shadow: 0 0 30px rgba(255, 85, 119, 0.35);
+            }
 
-    .viz {
-      display: grid; grid-template-columns: 1fr; gap: 12px; align-content: start;
-    }
-    .canvas-wrap { position: relative; aspect-ratio: 1 / 1; }
-    canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; border-radius: 12px; }
+            .viz {
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 12px;
+                align-content: start;
+            }
+            .canvas-wrap {
+                position: relative;
+                aspect-ratio: 1 / 1;
+            }
+            canvas {
+                width: 100%;
+                height: 100%;
+                display: block;
+                image-rendering: pixelated;
+                border-radius: 12px;
+            }
 
-    .badge {
-      display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; font-size:12px; color:#0b1b12;
-      background: linear-gradient(90deg, rgba(55,244,153,.9), rgba(0,229,255,.9));
-      box-shadow: 0 0 20px rgba(55,244,153,.45);
-    }
+            .badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                padding: 6px 10px;
+                border-radius: 999px;
+                font-size: 12px;
+                color: #0b1b12;
+                background: linear-gradient(90deg, rgba(55, 244, 153, 0.9), rgba(0, 229, 255, 0.9));
+                box-shadow: 0 0 20px rgba(55, 244, 153, 0.45);
+            }
 
-    details { border-top: 1px dashed rgba(255,255,255,.12); padding-top: 10px; margin-top: 10px; }
-    details summary { cursor: pointer; color: var(--text); }
+            details {
+                border-top: 1px dashed rgba(255, 255, 255, 0.12);
+                padding-top: 10px;
+                margin-top: 10px;
+            }
+            details summary {
+                cursor: pointer;
+                color: var(--text);
+            }
 
-    footer { max-width: 1200px; margin: 0 auto 60px; color: var(--muted); padding: 0 20px; text-align: center; }
-    .kpi { display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; margin-top: 10px; }
-    .kpi div { padding: 10px; border-radius: 12px; background: #0a0f18; border: 1px dashed rgba(0,229,255,.25); text-align:center; }
-    @media (max-width: 760px){ .kpi { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+            footer {
+                max-width: 1200px;
+                margin: 0 auto 60px;
+                color: var(--muted);
+                padding: 0 20px;
+                text-align: center;
+            }
+            .kpi {
+                display: grid;
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+                gap: 10px;
+                margin-top: 10px;
+            }
+            .kpi div {
+                padding: 10px;
+                border-radius: 12px;
+                background: #0a0f18;
+                border: 1px dashed rgba(0, 229, 255, 0.25);
+                text-align: center;
+            }
+            @media (max-width: 760px) {
+                .kpi {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                }
+            }
 
-    .ticker {
-      position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%);
-      display: inline-flex; gap: 10px; align-items:center; padding: 8px 12px; border-radius: 999px;
-      background: rgba(14,18,32,.75); backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,.1);
-      box-shadow: 0 0 20px rgba(0,229,255,.18);
-      font-size: 12px; color: var(--muted);
-    }
-  </style>
-</head>
-<body>
-  <header>
-    <div class="badge">⚡ Demo interactiva</div>
-    <h1 class="glow">Método del <span style="white-space:nowrap">Gradiente Conjugado</span> (CG)</h1>
-    <p>
-      Resolvemos un problema real de <strong>difusión de calor</strong> en una placa delgada. Al discretizar la ecuación de Laplace,
-      obtenemos un sistema lineal <code>A x = b</code> grande y <em>simétrico definido positivo</em> (SPD). El método CG lo resuelve
-      eficientemente sin formar explícitamente la matriz, usando únicamente productos <code>A·v</code>.
-    </p>
-  </header>
+            .ticker {
+                position: fixed;
+                bottom: 14px;
+                left: 50%;
+                transform: translateX(-50%);
+                display: inline-flex;
+                gap: 10px;
+                align-items: center;
+                padding: 8px 12px;
+                border-radius: 999px;
+                background: rgba(14, 18, 32, 0.75);
+                backdrop-filter: blur(6px);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                box-shadow: 0 0 20px rgba(0, 229, 255, 0.18);
+                font-size: 12px;
+                color: var(--muted);
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <div class="badge">⚡ Demo interactiva</div>
+            <h1 class="glow">Método del <span style="white-space: nowrap">Gradiente Conjugado</span> (CG)</h1>
+            <p>
+                Resolvemos un problema real de <strong>difusión de calor</strong> en una placa delgada. Al discretizar la ecuación de Laplace, obtenemos un sistema lineal <code>A x = b</code> grande y
+                <em>simétrico definido positivo</em> (SPD). El método CG lo resuelve eficientemente sin formar explícitamente la matriz, usando únicamente productos <code>A·v</code>.
+            </p>
+        </header>
 
-  <main class="grid">
-    <!-- Panel izquierdo: explicación + controles -->
-    <section class="card neon-border">
-      <h2>📌 Problema del mundo real: transferencia de calor</h2>
-      <p>
-        Imagina una <strong>placa metálica cuadrada</strong> aislada excepto en sus bordes: el borde izquierdo se mantiene a <strong>100&nbsp;°C</strong>
-        y los demás bordes a <strong>0&nbsp;°C</strong>. En estado estacionario, la temperatura interior <em>u(x,y)</em> satisface la ecuación de Laplace
-        <code>∇²u = 0</code> con condiciones de Dirichlet en el borde. Al discretizar con diferencias finitas (malla regular),
-        obtenemos el sistema SPD <code>A x = b</code> sobre las temperaturas de los nodos interiores.
-      </p>
-      <ul>
-        <li><strong>Desconocidas:</strong> temperaturas en nodos interiores (tamaño <code>m×m</code>).</li>
-        <li><strong>A:</strong> operador Laplaciano (plantilla 5 puntos), SPD.</li>
-        <li><strong>b:</strong> contribución de las fronteras conocidas.</li>
-      </ul>
+        <main class="grid">
+            <!-- Panel izquierdo: explicación + controles -->
+            <section class="card neon-border">
+                <h2>📌 Problema del mundo real: transferencia de calor</h2>
+                <p>
+                    Imagina una <strong>placa metálica cuadrada</strong> aislada excepto en sus bordes: el borde izquierdo se mantiene a <strong>100&nbsp;°C</strong> y los demás bordes a
+                    <strong>0&nbsp;°C</strong>. En estado estacionario, la temperatura interior <em>u(x,y)</em> satisface la ecuación de Laplace <code>∇²u = 0</code> con condiciones de Dirichlet en el
+                    borde. Al discretizar con diferencias finitas (malla regular), obtenemos el sistema SPD <code>A x = b</code> sobre las temperaturas de los nodos interiores.
+                </p>
+                <ul>
+                    <li><strong>Desconocidas:</strong> temperaturas en nodos interiores (tamaño <code>m×m</code>).</li>
+                    <li><strong>A:</strong> operador Laplaciano (plantilla 5 puntos), SPD.</li>
+                    <li><strong>b:</strong> contribución de las fronteras conocidas.</li>
+                </ul>
 
-      <div class="controls">
-        <label>
-          Resolución interior <small>(m)</small>
-          <input id="mInput" type="number" min="8" max="100" step="1" value="40" />
-        </label>
-        <label>
-          Tolerancia (‖r‖/‖b‖)
-          <input id="tolInput" type="text" value="1e-6" />
-        </label>
-        <label>
-          Iteraciones máx.
-          <input id="maxItInput" type="number" min="10" max="5000" step="10" value="1000" />
-        </label>
-        <label>
-          Temperatura borde izq. (°C)
-          <input id="leftBC" type="number" min="0" max="500" step="5" value="100" />
-        </label>
-      </div>
-      <div class="buttons">
-        <button class="btn" id="runBtn">▶ Ejecutar CG (animado)</button>
-        <button class="btn" id="stepBtn">➤ Paso simple</button>
-        <button class="btn danger" id="resetBtn">⟲ Reiniciar</button>
-      </div>
+                <div class="controls">
+                    <label>
+                        Resolución interior <small>(m)</small>
+                        <input
+                            id="mInput"
+                            type="number"
+                            min="8"
+                            max="100"
+                            step="1"
+                            value="40" />
+                    </label>
+                    <label>
+                        Tolerancia (‖r‖/‖b‖)
+                        <input
+                            id="tolInput"
+                            type="text"
+                            value="1e-6" />
+                    </label>
+                    <label>
+                        Iteraciones máx.
+                        <input
+                            id="maxItInput"
+                            type="number"
+                            min="10"
+                            max="5000"
+                            step="10"
+                            value="1000" />
+                    </label>
+                    <label>
+                        Temperatura borde izq. (°C)
+                        <input
+                            id="leftBC"
+                            type="number"
+                            min="0"
+                            max="500"
+                            step="5"
+                            value="100" />
+                    </label>
+                </div>
+                <div class="buttons">
+                    <button
+                        class="btn"
+                        id="runBtn">
+                        ▶ Ejecutar CG (animado)
+                    </button>
+                    <button
+                        class="btn"
+                        id="stepBtn">
+                        ➤ Paso simple
+                    </button>
+                    <button
+                        class="btn danger"
+                        id="resetBtn">
+                        ⟲ Reiniciar
+                    </button>
+                </div>
 
-      <details>
-        <summary>¿Cómo funciona CG? (resumen)</summary>
-        <p>
-          Para un sistema SPD <code>A x = b</code>, CG genera direcciones <em>conjugadas</em> <code>p₀, p₁, …</code> tales que
-          <code>pᵢᵀ A pⱼ = 0</code> si <code>i ≠ j</code>. Con ellas, minimiza la energía cuadrática
-          <code>ϕ(x) = ½ xᵀ A x − bᵀ x</code>. En exactitud aritmética, converge en ≤ <code>n</code> pasos; en práctica, depende del
-          <em>número de condición</em> de <code>A</code>. Solo usa productos <code>A·v</code> y productos escalares.
-        </p>
-        <pre style="white-space:pre-wrap; background:#070a12; padding:10px; border-radius:10px; border:1px solid rgba(255,255,255,.1)">
+                <details>
+                    <summary>¿Cómo funciona CG? (resumen)</summary>
+                    <p>
+                        Para un sistema SPD <code>A x = b</code>, CG genera direcciones <em>conjugadas</em> <code>p₀, p₁, …</code> tales que <code>pᵢᵀ A pⱼ = 0</code> si <code>i ≠ j</code>. Con ellas,
+                        minimiza la energía cuadrática <code>ϕ(x) = ½ xᵀ A x − bᵀ x</code>. En exactitud aritmética, converge en ≤ <code>n</code> pasos; en práctica, depende del
+                        <em>número de condición</em> de <code>A</code>. Solo usa productos <code>A·v</code> y productos escalares.
+                    </p>
+                    <pre style="white-space: pre-wrap; background: #070a12; padding: 10px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.1)">
 Algoritmo CG (boceto)
 Entradas: A·v (operador), b, x₀, tol
 r₀ = b − A x₀
@@ -191,505 +352,764 @@ Para k = 0,1,... hasta converger:
   Si ‖rₖ₊₁‖/‖b‖ < tol, parar
   βₖ = (rₖ₊₁ᵀ rₖ₊₁) / (rₖᵀ rₖ)
   pₖ₊₁ = rₖ₊₁ + βₖ pₖ
-        </pre>
-      </details>
-    </section>
+        </pre
+                    >
+                </details>
+            </section>
 
-    <!-- Panel derecho: visualizaciones -->
-    <section class="viz">
-      <div class="card neon-border">
-        <h2>🌡️ Temperatura en la placa (heatmap)</h2>
-        <div class="canvas-wrap"><canvas id="heat"></canvas></div>
-        <div class="kpi">
-          <div><strong>Iteración</strong><div id="iterKpi">—</div></div>
-          <div><strong>‖r‖/‖b‖</strong><div id="resKpi">—</div></div>
-          <div><strong>Dimensión</strong><div id="dimKpi">—</div></div>
-          <div><strong>Tiempo</strong><div id="timeKpi">—</div></div>
-        </div>
-      </div>
-      <div class="card neon-border">
-        <h2>📉 Norma del residuo (escala log)</h2>
-        <div class="canvas-wrap" style="aspect-ratio: 3/2"><canvas id="chart"></canvas></div>
-      </div>
-    </section>
-  </main>
+            <!-- Panel derecho: visualizaciones -->
+            <section class="viz">
+                <div class="card neon-border">
+                    <h2>🌡️ Temperatura en la placa (heatmap)</h2>
+                    <div class="canvas-wrap"><canvas id="heat"></canvas></div>
+                    <div class="kpi">
+                        <div>
+                            <strong>Iteración</strong>
+                            <div id="iterKpi">—</div>
+                        </div>
+                        <div>
+                            <strong>‖r‖/‖b‖</strong>
+                            <div id="resKpi">—</div>
+                        </div>
+                        <div>
+                            <strong>Dimensión</strong>
+                            <div id="dimKpi">—</div>
+                        </div>
+                        <div>
+                            <strong>Tiempo</strong>
+                            <div id="timeKpi">—</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card neon-border">
+                    <h2>📉 Norma del residuo (escala log)</h2>
+                    <div
+                        class="canvas-wrap"
+                        style="aspect-ratio: 3/2">
+                        <canvas id="chart"></canvas>
+                    </div>
+                </div>
+            </section>
+        </main>
 
-  <!-- ===================== SOR SECTION ===================== -->
-  <main class="grid" id="sor-section">
-    <!-- Panel izquierdo: explicación + controles SOR -->
-    <section class="card neon-border">
-      <h2>🧩 Método de Sobre-Relajación Sucesiva (SOR)</h2>
-      <p>
-        El <strong>SOR</strong> acelera a Gauss–Seidel introduciendo un factor de relajación <code>ω</code> (omega).
-        Para el mismo problema de <strong>difusión de calor</strong> en placa, actualiza cada nodo interior con el esquema de 5 puntos y luego aplica
-        <em>sobre-relajación</em>:
-      </p>
-      <pre style="white-space:pre-wrap; background:#070a12; padding:10px; border-radius:10px; border:1px solid rgba(255,255,255,.1)">
+        <!-- ===================== SOR SECTION ===================== -->
+        <main
+            class="grid"
+            id="sor-section">
+            <!-- Panel izquierdo: explicación + controles SOR -->
+            <section class="card neon-border">
+                <h2>🧩 Método de Sobre-Relajación Sucesiva (SOR)</h2>
+                <p>
+                    El <strong>SOR</strong> acelera a Gauss–Seidel introduciendo un factor de relajación <code>ω</code> (omega). Para el mismo problema de <strong>difusión de calor</strong> en placa,
+                    actualiza cada nodo interior con el esquema de 5 puntos y luego aplica <em>sobre-relajación</em>:
+                </p>
+                <pre style="white-space: pre-wrap; background: #070a12; padding: 10px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.1)">
 Gauss–Seidel (Laplace):
  uᵢⱼ ← ¼ (uᵢ₊₁ⱼ + uᵢ₋₁ⱼ + uᵢⱼ₊₁ + uᵢⱼ₋₁)
 SOR con ω ∈ (0,2):
  uᵢⱼ ← (1−ω) uᵢⱼ + ω · ¼ (uᵢ₊₁ⱼ + uᵢ₋₁ⱼ + uᵢⱼ₊₁ + uᵢⱼ₋₁)
-      </pre>
-      <p>
-        Con <code>ω≈1</code> se parece a Gauss–Seidel; con un <code>ω</code> bien elegido (típicamente 1.5–1.95 para Laplace en 2D),
-        <strong>converge mucho más rápido</strong>. A diferencia del CG, SOR <em>sí</em> usa la malla explícita y actualiza en el sitio (método iterativo local).
-      </p>
+      </pre
+                >
+                <p>
+                    Con <code>ω≈1</code> se parece a Gauss–Seidel; con un <code>ω</code> bien elegido (típicamente 1.5–1.95 para Laplace en 2D), <strong>converge mucho más rápido</strong>. A
+                    diferencia del CG, SOR <em>sí</em> usa la malla explícita y actualiza en el sitio (método iterativo local).
+                </p>
 
-      <div class="controls">
-        <label>
-          Resolución interior <small>(m)</small>
-          <input id="mInputSOR" type="number" min="8" max="160" step="1" value="40" />
-        </label>
-        <label>
-          Tolerancia (‖r‖/‖b‖)
-          <input id="tolSOR" type="text" value="1e-6" />
-        </label>
-        <label>
-          Iteraciones máx.
-          <input id="maxItSOR" type="number" min="10" max="20000" step="10" value="5000" />
-        </label>
-        <label>
-          ω (relajación)
-          <input id="omegaSOR" type="number" min="0.1" max="1.99" step="0.01" value="1.8" />
-        </label>
-        <label>
-          Temp. borde izq. (°C)
-          <input id="leftBCSOR" type="number" min="0" max="500" step="5" value="100" />
-        </label>
-        <label>
-          Pasos por cuadro
-          <input id="stepsPerFrameSOR" type="number" min="1" max="50" step="1" value="5" />
-        </label>
-      </div>
-      <div class="buttons">
-        <button class="btn" id="runBtnSOR">▶ Ejecutar SOR (animado)</button>
-        <button class="btn" id="stepBtnSOR">➤ Barrido simple</button>
-        <button class="btn danger" id="resetBtnSOR">⟲ Reiniciar</button>
-      </div>
+                <div class="controls">
+                    <label>
+                        Resolución interior <small>(m)</small>
+                        <input
+                            id="mInputSOR"
+                            type="number"
+                            min="8"
+                            max="160"
+                            step="1"
+                            value="40" />
+                    </label>
+                    <label>
+                        Tolerancia (‖r‖/‖b‖)
+                        <input
+                            id="tolSOR"
+                            type="text"
+                            value="1e-6" />
+                    </label>
+                    <label>
+                        Iteraciones máx.
+                        <input
+                            id="maxItSOR"
+                            type="number"
+                            min="10"
+                            max="20000"
+                            step="10"
+                            value="5000" />
+                    </label>
+                    <label>
+                        ω (relajación)
+                        <input
+                            id="omegaSOR"
+                            type="number"
+                            min="0.1"
+                            max="1.99"
+                            step="0.01"
+                            value="1.8" />
+                    </label>
+                    <label>
+                        Temp. borde izq. (°C)
+                        <input
+                            id="leftBCSOR"
+                            type="number"
+                            min="0"
+                            max="500"
+                            step="5"
+                            value="100" />
+                    </label>
+                    <label>
+                        Pasos por cuadro
+                        <input
+                            id="stepsPerFrameSOR"
+                            type="number"
+                            min="1"
+                            max="50"
+                            step="1"
+                            value="5" />
+                    </label>
+                </div>
+                <div class="buttons">
+                    <button
+                        class="btn"
+                        id="runBtnSOR">
+                        ▶ Ejecutar SOR (animado)
+                    </button>
+                    <button
+                        class="btn"
+                        id="stepBtnSOR">
+                        ➤ Barrido simple
+                    </button>
+                    <button
+                        class="btn danger"
+                        id="resetBtnSOR">
+                        ⟲ Reiniciar
+                    </button>
+                </div>
 
-      <details>
-        <summary>¿Cuándo usar SOR?</summary>
-        <ul>
-          <li>Cuando <code>A</code> es dispersa y la malla es natural (FDM/FEM) y quieres un método local fácil de implementar.</li>
-          <li>Cuando precondicionar CG es complejo y un buen <code>ω</code> da convergencia aceptable.</li>
-          <li>Para resolver de forma incremental (p. ej., cambios locales o condiciones tiempo-real aproximadas).</li>
-        </ul>
-      </details>
-    </section>
+                <details>
+                    <summary>¿Cuándo usar SOR?</summary>
+                    <ul>
+                        <li>Cuando <code>A</code> es dispersa y la malla es natural (FDM/FEM) y quieres un método local fácil de implementar.</li>
+                        <li>Cuando precondicionar CG es complejo y un buen <code>ω</code> da convergencia aceptable.</li>
+                        <li>Para resolver de forma incremental (p. ej., cambios locales o condiciones tiempo-real aproximadas).</li>
+                    </ul>
+                </details>
+            </section>
 
-    <!-- Panel derecho: visualizaciones SOR -->
-    <section class="viz">
-      <div class="card neon-border">
-        <h2>🌡️ Temperatura (SOR) en la placa</h2>
-        <div class="canvas-wrap"><canvas id="heatSOR"></canvas></div>
-        <div class="kpi">
-          <div><strong>Iteración</strong><div id="iterKpiSOR">—</div></div>
-          <div><strong>‖r‖/‖b‖</strong><div id="resKpiSOR">—</div></div>
-          <div><strong>Dimensión</strong><div id="dimKpiSOR">—</div></div>
-          <div><strong>Tiempo</strong><div id="timeKpiSOR">—</div></div>
-        </div>
-      </div>
-      <div class="card neon-border">
-        <h2>📉 Residuo (SOR) — escala log</h2>
-        <div class="canvas-wrap" style="aspect-ratio: 3/2"><canvas id="chartSOR"></canvas></div>
-      </div>
-    </section>
-  </main>
+            <!-- Panel derecho: visualizaciones SOR -->
+            <section class="viz">
+                <div class="card neon-border">
+                    <h2>🌡️ Temperatura (SOR) en la placa</h2>
+                    <div class="canvas-wrap"><canvas id="heatSOR"></canvas></div>
+                    <div class="kpi">
+                        <div>
+                            <strong>Iteración</strong>
+                            <div id="iterKpiSOR">—</div>
+                        </div>
+                        <div>
+                            <strong>‖r‖/‖b‖</strong>
+                            <div id="resKpiSOR">—</div>
+                        </div>
+                        <div>
+                            <strong>Dimensión</strong>
+                            <div id="dimKpiSOR">—</div>
+                        </div>
+                        <div>
+                            <strong>Tiempo</strong>
+                            <div id="timeKpiSOR">—</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card neon-border">
+                    <h2>📉 Residuo (SOR) — escala log</h2>
+                    <div
+                        class="canvas-wrap"
+                        style="aspect-ratio: 3/2">
+                        <canvas id="chartSOR"></canvas>
+                    </div>
+                </div>
+            </section>
+        </main>
 
-  <footer>
-    <p>
-      Consejo: en problemas de ingeniería (FEM/CFD), <strong>precondicionar</strong> (p. ej., Jacobi/ILU) mejora notablemente la convergencia
-      del CG al reducir el número de condición de <code>A</code>. Aquí usamos CG <em>sin precondicionador</em> para claridad.
-    </p>
-  </footer>
+        <footer>
+            <p>
+                Consejo: en problemas de ingeniería (FEM/CFD), <strong>precondicionar</strong> (p. ej., Jacobi/ILU) mejora notablemente la convergencia del CG al reducir el número de condición de
+                <code>A</code>. Aquí usamos CG <em>sin precondicionador</em> para claridad.
+            </p>
+        </footer>
 
-  <div class="ticker">Hecho con ♥ y <span style="color:var(--accent); font-weight:700">neón</span>. Cambia la resolución y vuelve a correr.</div>
+        <div class="ticker">Hecho con ♥ y <span style="color: var(--accent); font-weight: 700">neón</span>. Cambia la resolución y vuelve a correr.</div>
 
-  <script>
-    // =============== Utilidades numéricas básicas ===============
-    function zeros(n){ return new Float64Array(n); }
-    function copy(a){ return new Float64Array(a); }
-    function dot(a,b){ let s=0, n=a.length; for(let i=0;i<n;i++) s+=a[i]*b[i]; return s; }
-    function axpy(a,x,y){ // y <- a*x + y
-      for(let i=0;i<x.length;i++) y[i]+=a*x[i];
-    }
-    function scal(a,x){ for(let i=0;i<x.length;i++) x[i]*=a; }
+        <script>
+            // =============== Utilidades numéricas básicas ===============
+            function zeros(n) {
+                return new Float64Array(n);
+            }
+            function copy(a) {
+                return new Float64Array(a);
+            }
+            function dot(a, b) {
+                let s = 0,
+                    n = a.length;
+                for (let i = 0; i < n; i++) s += a[i] * b[i];
+                return s;
+            }
+            function axpy(a, x, y) {
+                // y <- a*x + y
+                for (let i = 0; i < x.length; i++) y[i] += a * x[i];
+            }
+            function scal(a, x) {
+                for (let i = 0; i < x.length; i++) x[i] *= a;
+            }
 
-    // =============== Modelo de placa: Laplaciano 5 puntos ===============
-    // Mallado: nodos totales n x n, con m = n-2 nodos interiores desconocidos.
-    // Dirichlet: u=TL en x=0 (izq), u=0 en resto de los bordes.
+            // =============== Modelo de placa: Laplaciano 5 puntos ===============
+            // Mallado: nodos totales n x n, con m = n-2 nodos interiores desconocidos.
+            // Dirichlet: u=TL en x=0 (izq), u=0 en resto de los bordes.
 
-    const heatCanvas = document.getElementById('heat');
-    const chartCanvas = document.getElementById('chart');
-    const iterKpi = document.getElementById('iterKpi');
-    const resKpi  = document.getElementById('resKpi');
-    const dimKpi  = document.getElementById('dimKpi');
-    const timeKpi = document.getElementById('timeKpi');
+            const heatCanvas = document.getElementById("heat");
+            const chartCanvas = document.getElementById("chart");
+            const iterKpi = document.getElementById("iterKpi");
+            const resKpi = document.getElementById("resKpi");
+            const dimKpi = document.getElementById("dimKpi");
+            const timeKpi = document.getElementById("timeKpi");
 
-    const mInput = document.getElementById('mInput');
-    const tolInput = document.getElementById('tolInput');
-    const maxItInput = document.getElementById('maxItInput');
-    const leftBCInput = document.getElementById('leftBC');
-    const runBtn = document.getElementById('runBtn');
-    const stepBtn = document.getElementById('stepBtn');
-    const resetBtn = document.getElementById('resetBtn');
+            const mInput = document.getElementById("mInput");
+            const tolInput = document.getElementById("tolInput");
+            const maxItInput = document.getElementById("maxItInput");
+            const leftBCInput = document.getElementById("leftBC");
+            const runBtn = document.getElementById("runBtn");
+            const stepBtn = document.getElementById("stepBtn");
+            const resetBtn = document.getElementById("resetBtn");
 
-    let state = {};
+            const m = Math.max(8, Math.min(200, parseInt(mInput.value || 40)));
+            const n = m + 2; // nodos totales por dimensión
+            const TL = parseFloat(leftBCInput.value || 100);
 
-    function setupProblem(){
-      const m = Math.max(8, Math.min(200, parseInt(mInput.value||40)));
-      const n = m + 2;            // nodos totales por dimensión
-      const TL = parseFloat(leftBCInput.value||100);
-      const h = 1/(n-1);
-      const invh2 = 1/(h*h);
-      const N = m*m;              // tamaño del sistema
+            let state = {};
 
-      // b: contribuciones de frontera
-      const b = zeros(N);
-      function id(i,j){ return i*m + j; } // i,j = 0..m-1 (interior)
-      for(let i=0;i<m;i++){
-        for(let j=0;j<m;j++){
-          let rhs = 0;
-          // vecino izquierdo toca frontera x=0 → u=TL
-          if(j===0) rhs += TL*invh2;
-          // otros bordes 0°C no aportan
-          b[id(i,j)] = rhs;
-        }
-      }
+            function setupProblem() {
+                const m = Math.max(8, Math.min(200, parseInt(mInput.value || 40)));
+                const n = m + 2; // nodos totales por dimensión
+                const TL = parseFloat(leftBCInput.value || 100);
+                const h = 1 / (n - 1);
+                const invh2 = 1 / (h * h);
+                const N = m * m; // tamaño del sistema
 
-      // Operador A·x para Laplaciano (4* -1 -1 -1 -1)/h^2
-      function matvec(x){
-        const y = zeros(N);
-        for(let i=0;i<m;i++){
-          for(let j=0;j<m;j++){
-            const k = id(i,j);
-            let s = 4*x[k];
-            // vecinos interiores
-            s -= (i>0   ? x[id(i-1,j)] : 0);
-            s -= (i<m-1? x[id(i+1,j)] : 0);
-            s -= (j>0   ? x[id(i,j-1)] : 0);
-            s -= (j<m-1? x[id(i,j+1)] : 0);
-            y[k] = s*invh2;
-          }
-        }
-        return y;
-      }
+                // b: contribuciones de frontera
+                const b = zeros(N);
+                function id(i, j) {
+                    return i * m + j;
+                } // i,j = 0..m-1 (interior)
+                for (let i = 0; i < m; i++) {
+                    for (let j = 0; j < m; j++) {
+                        let rhs = 0;
+                        // vecino izquierdo toca frontera x=0 → u=TL
+                        if (j === 0) rhs += TL * invh2;
+                        // otros bordes 0°C no aportan
+                        b[id(i, j)] = rhs;
+                    }
+                }
 
-      const x = zeros(N); // x0 = 0
+                // Operador A·x para Laplaciano (4* -1 -1 -1 -1)/h^2
+                function matvec(x) {
+                    const y = zeros(N);
+                    for (let i = 0; i < m; i++) {
+                        for (let j = 0; j < m; j++) {
+                            const k = id(i, j);
+                            let s = 4 * x[k];
+                            // vecinos interiores
+                            s -= i > 0 ? x[id(i - 1, j)] : 0;
+                            s -= i < m - 1 ? x[id(i + 1, j)] : 0;
+                            s -= j > 0 ? x[id(i, j - 1)] : 0;
+                            s -= j < m - 1 ? x[id(i, j + 1)] : 0;
+                            y[k] = s * invh2;
+                        }
+                    }
+                    return y;
+                }
 
-      // Para visualizar, reconstruimos la grilla n×n con bordes
-      function reconstruct(xv){
-        const grid = new Float64Array(n*n);
-        // bordes
-        for(let i=0;i<n;i++){
-          grid[i*n + 0] = TL;           // izquierda
-          grid[i*n + (n-1)] = 0;         // derecha
-        }
-        for(let j=0;j<n;j++){
-          grid[0*n + j] = 0;             // arriba
-          grid[(n-1)*n + j] = 0;         // abajo
-        }
-        // interior desde xv
-        for(let i=0;i<m;i++){
-          for(let j=0;j<m;j++){
-            grid[(i+1)*n + (j+1)] = xv[i*m + j];
-          }
-        }
-        return {grid, n};
-      }
+                const x = zeros(N); // x0 = 0
 
-      // Guardar en estado
-      state = {m,n,N,h,invh2,TL,b,matvec,x,iter:0, r:null, p:null, Ap:null, bnorm:null, hist:[], t0: performance.now(), done:false};
-      dimKpi.textContent = `${state.N.toLocaleString('en-US')} ( ${m}×${m} )`;
-      iterKpi.textContent = '0';
-      resKpi.textContent = '—';
-      timeKpi.textContent = '0 ms';
+                // Para visualizar, reconstruimos la grilla n×n con bordes
+                function reconstruct(xv) {
+                    const grid = new Float64Array(n * n);
+                    // bordes
+                    for (let i = 0; i < n; i++) {
+                        grid[i * n + 0] = TL; // izquierda
+                        grid[i * n + (n - 1)] = 0; // derecha
+                    }
+                    for (let j = 0; j < n; j++) {
+                        grid[0 * n + j] = 0; // arriba
+                        grid[(n - 1) * n + j] = 0; // abajo
+                    }
+                    // interior desde xv
+                    for (let i = 0; i < m; i++) {
+                        for (let j = 0; j < m; j++) {
+                            grid[(i + 1) * n + (j + 1)] = xv[i * m + j];
+                        }
+                    }
+                    return {grid, n};
+                }
 
-      drawHeat(reconstruct(state.x));
-      drawChart([]);
-    }
+                // Guardar en estado
+                state = {m, n, N, h, invh2, TL, b, matvec, x, iter: 0, r: null, p: null, Ap: null, bnorm: null, hist: [], t0: performance.now(), done: false};
+                dimKpi.textContent = `${state.N.toLocaleString("en-US")} ( ${m}×${m} )`;
+                iterKpi.textContent = "0";
+                resKpi.textContent = "—";
+                timeKpi.textContent = "0 ms";
 
-    // =============== CG paso-a-paso ===============
-    function cgInit(){
-      const {matvec, b, x} = state;
-      const Ax = matvec(x);
-      let r = copy(b);
-      axpy(-1, Ax, r); // r = b - A x
-      let p = copy(r);
-      const bnorm = Math.sqrt(Math.max(1e-30, dot(b,b)));
-      state.r = r; state.p = p; state.iter = 0; state.bnorm = bnorm; state.hist = [];
-      state.done = false; state.t0 = performance.now();
-      updateKPIs();
-    }
+                drawHeat(reconstruct(state.x));
+                drawChart([]);
+            }
+            function reconstruct(xv) {
+                const grid = new Float64Array(n * n);
+                // bordes
+                for (let i = 0; i < n; i++) {
+                    grid[i * n + 0] = TL; // izquierda
+                    grid[i * n + (n - 1)] = 0; // derecha
+                }
+                for (let j = 0; j < n; j++) {
+                    grid[0 * n + j] = 0; // arriba
+                    grid[(n - 1) * n + j] = 0; // abajo
+                }
+                // interior desde xv
+                for (let i = 0; i < m; i++) {
+                    for (let j = 0; j < m; j++) {
+                        grid[(i + 1) * n + (j + 1)] = xv[i * m + j];
+                    }
+                }
+                return {grid, n};
+            }
 
-    function cgStep(){
-      const s = state; if(s.done) return;
-      const {matvec} = s;
-      const Ap = matvec(s.p);
-      const rr = dot(s.r, s.r);
-      const alpha = rr / Math.max(1e-30, dot(s.p, Ap));
-      axpy(alpha, s.p, s.x);     // x = x + α p
-      axpy(-alpha, Ap, s.r);     // r = r - α Ap
-      const rrNew = dot(s.r, s.r);
-      const beta = rrNew / Math.max(1e-30, rr);
-      // p = r + β p
-      for(let i=0;i<s.p.length;i++) s.p[i] = s.r[i] + beta * s.p[i];
+            // =============== CG paso-a-paso ===============
+            function cgInit() {
+                const {matvec, b, x} = state;
+                const Ax = matvec(x);
+                let r = copy(b);
+                axpy(-1, Ax, r); // r = b - A x
+                let p = copy(r);
+                const bnorm = Math.sqrt(Math.max(1e-30, dot(b, b)));
+                state.r = r;
+                state.p = p;
+                state.iter = 0;
+                state.bnorm = bnorm;
+                state.hist = [];
+                state.done = false;
+                state.t0 = performance.now();
+                updateKPIs();
+            }
 
-      s.iter++;
-      const rel = Math.sqrt(rrNew) / (s.bnorm || 1);
-      s.hist.push(rel);
-      if(!isFinite(rel) || rel <= parseFloat(tolInput.value || '1e-6') || s.iter >= parseInt(maxItInput.value||1000)){
-        s.done = true;
-      }
-      updateKPIs(rel);
-      drawHeat(reconstruct(s.x));
-      drawChart(s.hist);
-    }
+            function cgStep() {
+                const s = state;
+                if (s.done) return;
+                const {matvec} = s;
+                const Ap = matvec(s.p);
+                const rr = dot(s.r, s.r);
+                const alpha = rr / Math.max(1e-30, dot(s.p, Ap));
+                axpy(alpha, s.p, s.x); // x = x + α p
+                axpy(-alpha, Ap, s.r); // r = r - α Ap
+                const rrNew = dot(s.r, s.r);
+                const beta = rrNew / Math.max(1e-30, rr);
+                // p = r + β p
+                for (let i = 0; i < s.p.length; i++) s.p[i] = s.r[i] + beta * s.p[i];
 
-    function updateKPIs(rel){
-      iterKpi.textContent = String(state.iter);
-      resKpi.textContent = rel == null ? '—' : (rel<1e-12? rel.toExponential(2) : rel.toFixed(6));
-      const ms = Math.max(0, performance.now() - state.t0);
-      timeKpi.textContent = `${ms.toFixed(0)} ms`;
-    }
+                s.iter++;
+                const rel = Math.sqrt(rrNew) / (s.bnorm || 1);
+                s.hist.push(rel);
+                if (!isFinite(rel) || rel <= parseFloat(tolInput.value || "1e-6") || s.iter >= parseInt(maxItInput.value || 1000)) {
+                    s.done = true;
+                }
+                updateKPIs(rel);
+                drawHeat(reconstruct(s.x));
+                drawChart(s.hist);
+            }
 
-    // =============== Visualización: heatmap simple + línea log10 ===============
-    function drawHeat({grid,n}){
-      const ctx = heatCanvas.getContext('2d');
-      // Asegura dimensiones de dibujo basadas en el tamaño CSS del canvas
-      const W = Math.max(1, heatCanvas.clientWidth * devicePixelRatio);
-      const H = Math.max(1, heatCanvas.clientHeight * devicePixelRatio);
-      heatCanvas.width = W;
-      heatCanvas.height = H;
+            function updateKPIs(rel) {
+                iterKpi.textContent = String(state.iter);
+                resKpi.textContent = rel == null ? "—" : rel < 1e-12 ? rel.toExponential(2) : rel.toFixed(6);
+                const ms = Math.max(0, performance.now() - state.t0);
+                timeKpi.textContent = `${ms.toFixed(0)} ms`;
+            }
 
-      // min/max para escalar colores
-      let mn = Infinity, mx = -Infinity;
-      for(let i=0;i<grid.length;i++){ const v=grid[i]; if(v<mn) mn=v; if(v>mx) mx=v; }
-      const img = new ImageData(n, n);
-      for(let i=0;i<n;i++){
-        for(let j=0;j<n;j++){
-          const v = grid[i*n + j];
-          const t = (v - mn) / (mx - mn + 1e-12);
-          const c1 = [0,229,255], c2=[255,0,240], c3=[124,255,0];
-          let r,g,b;
-          if(t < 0.5){
-            const u = t*2; r = c1[0]*(1-u) + c2[0]*u; g = c1[1]*(1-u) + c2[1]*u; b = c1[2]*(1-u) + c2[2]*u;
-          } else {
-            const u = (t-0.5)*2; r = c2[0]*(1-u) + c3[0]*u; g = c2[1]*(1-u) + c3[1]*u; b = c2[2]*(1-u) + c3[2]*u;
-          }
-          const idx = (i*n + j)*4; img.data[idx]=r; img.data[idx+1]=g; img.data[idx+2]=b; img.data[idx+3]=255;
-        }
-      }
-      // Fallback si OffscreenCanvas no está disponible
-      let offCanvas;
-      if(typeof OffscreenCanvas !== 'undefined'){
-        offCanvas = new OffscreenCanvas(n, n);
-      } else {
-        offCanvas = document.createElement('canvas'); offCanvas.width = n; offCanvas.height = n;
-      }
-      const octx = offCanvas.getContext('2d');
-      octx.putImageData(img, 0, 0);
-      ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(offCanvas, 0, 0, W, H);
-    }
+            // =============== Visualización: heatmap simple + línea log10 ===============
+            function drawHeat({grid, n}) {
+                const ctx = heatCanvas.getContext("2d");
+                // Asegura dimensiones de dibujo basadas en el tamaño CSS del canvas
+                const W = Math.max(1, heatCanvas.clientWidth * devicePixelRatio);
+                const H = Math.max(1, heatCanvas.clientHeight * devicePixelRatio);
+                heatCanvas.width = W;
+                heatCanvas.height = H;
 
-    function drawChart(hist){
-      const ctx = chartCanvas.getContext('2d');
-      const W = chartCanvas.clientWidth * devicePixelRatio;
-      const H = chartCanvas.clientHeight * devicePixelRatio;
-      chartCanvas.width = W; chartCanvas.height = H;
-      ctx.clearRect(0,0,W,H);
-      // Marco
-      ctx.strokeStyle = 'rgba(0,229,255,.6)';
-      ctx.lineWidth = 2; ctx.strokeRect(10,10,W-20,H-20);
-      if(!hist || hist.length===0) return;
-      // log10 residuo
-      const y = hist.map(v=> Math.log10(Math.max(1e-20, v)));
-      const xmin=0, xmax=hist.length-1;
-      let ymin=Infinity, ymax=-Infinity; for(const val of y){ if(val<ymin) ymin=val; if(val>ymax) ymax=val; }
-      if(ymin===ymax){ ymin-=1; ymax+=1; }
-      function X(i){ return 10 + (W-20)*( (i-xmin)/(Math.max(1,xmax-xmin)) ); }
-      function Y(v){ return 10 + (H-20)*(1-( (v-ymin)/(ymax-ymin) )); }
-      ctx.beginPath();
-      ctx.moveTo(X(0), Y(y[0]));
-      for(let i=1;i<y.length;i++) ctx.lineTo(X(i), Y(y[i]));
-      ctx.strokeStyle = 'rgba(255,0,240,.8)';
-      ctx.lineWidth = 3; ctx.shadowColor='rgba(255,0,240,.6)'; ctx.shadowBlur=10; ctx.stroke();
-    }
+                // min/max para escalar colores
+                let mn = Infinity,
+                    mx = -Infinity;
+                for (let i = 0; i < grid.length; i++) {
+                    const v = grid[i];
+                    if (v < mn) mn = v;
+                    if (v > mx) mx = v;
+                }
+                const img = new ImageData(n, n);
+                for (let i = 0; i < n; i++) {
+                    for (let j = 0; j < n; j++) {
+                        const v = grid[i * n + j];
+                        const t = (v - mn) / (mx - mn + 1e-12);
+                        const c1 = [0, 229, 255],
+                            c2 = [255, 0, 240],
+                            c3 = [124, 255, 0];
+                        let r, g, b;
+                        if (t < 0.5) {
+                            const u = t * 2;
+                            r = c1[0] * (1 - u) + c2[0] * u;
+                            g = c1[1] * (1 - u) + c2[1] * u;
+                            b = c1[2] * (1 - u) + c2[2] * u;
+                        } else {
+                            const u = (t - 0.5) * 2;
+                            r = c2[0] * (1 - u) + c3[0] * u;
+                            g = c2[1] * (1 - u) + c3[1] * u;
+                            b = c2[2] * (1 - u) + c3[2] * u;
+                        }
+                        const idx = (i * n + j) * 4;
+                        img.data[idx] = r;
+                        img.data[idx + 1] = g;
+                        img.data[idx + 2] = b;
+                        img.data[idx + 3] = 255;
+                    }
+                }
+                // Fallback si OffscreenCanvas no está disponible
+                let offCanvas;
+                if (typeof OffscreenCanvas !== "undefined") {
+                    offCanvas = new OffscreenCanvas(n, n);
+                } else {
+                    offCanvas = document.createElement("canvas");
+                    offCanvas.width = n;
+                    offCanvas.height = n;
+                }
+                const octx = offCanvas.getContext("2d");
+                octx.putImageData(img, 0, 0);
+                ctx.imageSmoothingEnabled = false;
+                ctx.drawImage(offCanvas, 0, 0, W, H);
+            }
 
-    // =============== Animación de CG ===============
-    let animId=null;
-    function animate(){
-      if(state.done){ cancelAnimationFrame(animId); animId=null; return; }
-      for(let t=0;t<3;t++) cgStep(); // 3 pasos por frame para agilidad
-      animId = requestAnimationFrame(animate);
-    }
+            function drawChart(hist) {
+                const ctx = chartCanvas.getContext("2d");
+                const W = chartCanvas.clientWidth * devicePixelRatio;
+                const H = chartCanvas.clientHeight * devicePixelRatio;
+                chartCanvas.width = W;
+                chartCanvas.height = H;
+                ctx.clearRect(0, 0, W, H);
+                // Marco
+                ctx.strokeStyle = "rgba(0,229,255,.6)";
+                ctx.lineWidth = 2;
+                ctx.strokeRect(10, 10, W - 20, H - 20);
+                if (!hist || hist.length === 0) return;
+                // log10 residuo
+                const y = hist.map((v) => Math.log10(Math.max(1e-20, v)));
+                const xmin = 0,
+                    xmax = hist.length - 1;
+                let ymin = Infinity,
+                    ymax = -Infinity;
+                for (const val of y) {
+                    if (val < ymin) ymin = val;
+                    if (val > ymax) ymax = val;
+                }
+                if (ymin === ymax) {
+                    ymin -= 1;
+                    ymax += 1;
+                }
+                function X(i) {
+                    return 10 + (W - 20) * ((i - xmin) / Math.max(1, xmax - xmin));
+                }
+                function Y(v) {
+                    return 10 + (H - 20) * (1 - (v - ymin) / (ymax - ymin));
+                }
+                ctx.beginPath();
+                ctx.moveTo(X(0), Y(y[0]));
+                for (let i = 1; i < y.length; i++) ctx.lineTo(X(i), Y(y[i]));
+                ctx.strokeStyle = "rgba(255,0,240,.8)";
+                ctx.lineWidth = 3;
+                ctx.shadowColor = "rgba(255,0,240,.6)";
+                ctx.shadowBlur = 10;
+                ctx.stroke();
+            }
 
-    // =============== Eventos ===============
-    runBtn.addEventListener('click', ()=>{ if(!state.r) cgInit(); if(animId) cancelAnimationFrame(animId); animId=requestAnimationFrame(animate); });
-    stepBtn.addEventListener('click', ()=>{ if(!state.r) cgInit(); if(animId) cancelAnimationFrame(animId); cgStep(); });
-    resetBtn.addEventListener('click', ()=>{ if(animId) cancelAnimationFrame(animId); setupProblem(); });
+            // =============== Animación de CG ===============
+            let animId = null;
+            function animate() {
+                if (state.done) {
+                    cancelAnimationFrame(animId);
+                    animId = null;
+                    return;
+                }
+                for (let t = 0; t < 3; t++) cgStep(); // 3 pasos por frame para agilidad
+                animId = requestAnimationFrame(animate);
+            }
 
-    // Inicializar
-    setupProblem();
+            // =============== Eventos ===============
+            runBtn.addEventListener("click", () => {
+                if (!state.r) cgInit();
+                if (animId) cancelAnimationFrame(animId);
+                animId = requestAnimationFrame(animate);
+            });
+            stepBtn.addEventListener("click", () => {
+                if (!state.r) cgInit();
+                if (animId) cancelAnimationFrame(animId);
+                cgStep();
+            });
+            resetBtn.addEventListener("click", () => {
+                if (animId) cancelAnimationFrame(animId);
+                setupProblem();
+            });
 
-    /* ===================== SOR IMPLEMENTACIÓN ===================== */
-    const heatCanvasSOR = document.getElementById('heatSOR');
-    const chartCanvasSOR = document.getElementById('chartSOR');
-    const iterKpiSOR = document.getElementById('iterKpiSOR');
-    const resKpiSOR  = document.getElementById('resKpiSOR');
-    const dimKpiSOR  = document.getElementById('dimKpiSOR');
-    const timeKpiSOR = document.getElementById('timeKpiSOR');
+            // Inicializar
+            setupProblem();
 
-    const mInputSOR = document.getElementById('mInputSOR');
-    const tolSOR = document.getElementById('tolSOR');
-    const maxItSOR = document.getElementById('maxItSOR');
-    const omegaSOR = document.getElementById('omegaSOR');
-    const leftBCSOR = document.getElementById('leftBCSOR');
-    const stepsPerFrameSOR = document.getElementById('stepsPerFrameSOR');
+            /* ===================== SOR IMPLEMENTACIÓN ===================== */
+            const heatCanvasSOR = document.getElementById("heatSOR");
+            const chartCanvasSOR = document.getElementById("chartSOR");
+            const iterKpiSOR = document.getElementById("iterKpiSOR");
+            const resKpiSOR = document.getElementById("resKpiSOR");
+            const dimKpiSOR = document.getElementById("dimKpiSOR");
+            const timeKpiSOR = document.getElementById("timeKpiSOR");
 
-    const runBtnSOR = document.getElementById('runBtnSOR');
-    const stepBtnSOR = document.getElementById('stepBtnSOR');
-    const resetBtnSOR = document.getElementById('resetBtnSOR');
+            const mInputSOR = document.getElementById("mInputSOR");
+            const tolSOR = document.getElementById("tolSOR");
+            const maxItSOR = document.getElementById("maxItSOR");
+            const omegaSOR = document.getElementById("omegaSOR");
+            const leftBCSOR = document.getElementById("leftBCSOR");
+            const stepsPerFrameSOR = document.getElementById("stepsPerFrameSOR");
 
-    let sor = {};
+            const runBtnSOR = document.getElementById("runBtnSOR");
+            const stepBtnSOR = document.getElementById("stepBtnSOR");
+            const resetBtnSOR = document.getElementById("resetBtnSOR");
 
-    function setupSOR(){
-      const m = Math.max(8, Math.min(240, parseInt(mInputSOR.value||40)));
-      const n = m + 2;
-      const TL = parseFloat(leftBCSOR.value||100);
-      const h = 1/(n-1); const invh2 = 1/(h*h);
-      const N = m*m;
+            let sor = {};
 
-      // Estado de temperatura incluyendo bordes (n×n)
-      const U = new Float64Array(n*n);
-      // Bordes
-      for(let i=0;i<n;i++){
-        U[i*n + 0] = TL;        // izquierda
-        U[i*n + (n-1)] = 0;     // derecha
-      }
-      for(let j=0;j<n;j++){
-        U[0*n + j] = 0;         // arriba
-        U[(n-1)*n + j] = 0;     // abajo
-      }
+            function setupSOR() {
+                const m = Math.max(8, Math.min(240, parseInt(mInputSOR.value || 40)));
+                const n = m + 2;
+                const TL = parseFloat(leftBCSOR.value || 100);
+                const h = 1 / (n - 1);
+                const invh2 = 1 / (h * h);
+                const N = m * m;
 
-      // Vector b para residuo (solo interior)
-      const b = new Float64Array(N);
-      function id(i,j){ return i*m + j; }
-      function gid(i,j){ return (i+1)*n + (j+1); } // a grilla con bordes
-      for(let i=0;i<m;i++){
-        for(let j=0;j<m;j++){
-          let rhs = 0; if(j===0) rhs += TL*invh2; b[id(i,j)] = rhs;
-        }
-      }
+                // Estado de temperatura incluyendo bordes (n×n)
+                const U = new Float64Array(n * n);
+                // Bordes
+                for (let i = 0; i < n; i++) {
+                    U[i * n + 0] = TL; // izquierda
+                    U[i * n + (n - 1)] = 0; // derecha
+                }
+                for (let j = 0; j < n; j++) {
+                    U[0 * n + j] = 0; // arriba
+                    U[(n - 1) * n + j] = 0; // abajo
+                }
 
-      function matvecVec(xv){
-        const y = new Float64Array(N);
-        for(let i=0;i<m;i++){
-          for(let j=0;j<m;j++){
-            const k = id(i,j);
-            let s = 4*xv[k];
-            if(i>0)   s -= xv[id(i-1,j)];
-            if(i<m-1) s -= xv[id(i+1,j)];
-            if(j>0)   s -= xv[id(i,j-1)];
-            if(j<m-1) s -= xv[id(i,j+1)];
-            y[k] = s*invh2;
-          }
-        }
-        return y;
-      }
+                // Vector b para residuo (solo interior)
+                const b = new Float64Array(N);
+                function id(i, j) {
+                    return i * m + j;
+                }
+                function gid(i, j) {
+                    return (i + 1) * n + (j + 1);
+                } // a grilla con bordes
+                for (let i = 0; i < m; i++) {
+                    for (let j = 0; j < m; j++) {
+                        let rhs = 0;
+                        if (j === 0) rhs += TL * invh2;
+                        b[id(i, j)] = rhs;
+                    }
+                }
 
-      function extractX(){
-        const xv = new Float64Array(N);
-        for(let i=0;i<m;i++) for(let j=0;j<m;j++) xv[id(i,j)] = U[gid(i,j)];
-        return xv;
-      }
+                function matvecVec(xv) {
+                    const y = new Float64Array(N);
+                    for (let i = 0; i < m; i++) {
+                        for (let j = 0; j < m; j++) {
+                            const k = id(i, j);
+                            let s = 4 * xv[k];
+                            if (i > 0) s -= xv[id(i - 1, j)];
+                            if (i < m - 1) s -= xv[id(i + 1, j)];
+                            if (j > 0) s -= xv[id(i, j - 1)];
+                            if (j < m - 1) s -= xv[id(i, j + 1)];
+                            y[k] = s * invh2;
+                        }
+                    }
+                    return y;
+                }
 
-      sor = {m,n,N,h,invh2,TL,U,b,iter:0, hist:[], done:false, t0:performance.now(), matvecVec, extractX};
-      dimKpiSOR.textContent = `${N.toLocaleString('en-US')} ( ${m}×${m} )`;
-      iterKpiSOR.textContent = '0'; resKpiSOR.textContent='—'; timeKpiSOR.textContent='0 ms';
-      drawHeatSOR(); drawChartSOR([]);
-    }
+                function extractX() {
+                    const xv = new Float64Array(N);
+                    for (let i = 0; i < m; i++) for (let j = 0; j < m; j++) xv[id(i, j)] = U[gid(i, j)];
+                    return xv;
+                }
 
-    function sorSweep(){
-      const ω = Math.max(0.1, Math.min(1.99, parseFloat(omegaSOR.value||1.8)));
-      const s = sor; const {U,n} = s;
-      // Un barrido sobre todos los interiores
-      for(let i=1;i<n-1;i++){
-        for(let j=1;j<n-1;j++){
-          const idx = i*n + j;
-          const avg = 0.25*( U[(i+1)*n + j] + U[(i-1)*n + j] + U[i*n + (j+1)] + U[i*n + (j-1)] );
-          U[idx] = (1-ω)*U[idx] + ω*avg;
-        }
-      }
-      sor.iter++;
-      // Residuo relativo
-      const x = s.extractX();
-      const Ax = s.matvecVec(x);
-      let rr=0, bb=0; for(let k=0;k<s.N;k++){ const rk = s.b[k] - Ax[k]; rr += rk*rk; bb += s.b[k]*s.b[k]; }
-      const rel = Math.sqrt(rr)/Math.max(1e-30, Math.sqrt(bb));
-      sor.hist.push(rel);
-      if(rel <= parseFloat(tolSOR.value||'1e-6') || sor.iter >= parseInt(maxItSOR.value||5000)) sor.done = true;
-      iterKpiSOR.textContent = String(sor.iter);
-      resKpiSOR.textContent = (rel<1e-12? rel.toExponential(2) : rel.toFixed(6));
-      const ms = Math.max(0, performance.now() - sor.t0); timeKpiSOR.textContent = `${ms.toFixed(0)} ms`;
-      drawHeatSOR(); drawChartSOR(sor.hist);
-    }
+                sor = {m, n, N, h, invh2, TL, U, b, iter: 0, hist: [], done: false, t0: performance.now(), matvecVec, extractX};
+                dimKpiSOR.textContent = `${N.toLocaleString("en-US")} ( ${m}×${m} )`;
+                iterKpiSOR.textContent = "0";
+                resKpiSOR.textContent = "—";
+                timeKpiSOR.textContent = "0 ms";
+                drawHeatSOR();
+                drawChartSOR([]);
+            }
 
-    function drawHeatSOR(){
-      const ctx = heatCanvasSOR.getContext('2d');
-      const W = heatCanvasSOR.clientWidth * devicePixelRatio;
-      const H = heatCanvasSOR.clientHeight * devicePixelRatio;
-      heatCanvasSOR.width = W; heatCanvasSOR.height = H;
-      const n = sor.n; const grid = sor.U;
-      // min/max
-      let mn=Infinity, mx=-Infinity; for(let i=0;i<grid.length;i++){ const v=grid[i]; if(v<mn) mn=v; if(v>mx) mx=v; }
-      const img = ctx.createImageData(n,n);
-      for(let i=0;i<n;i++){
-        for(let j=0;j<n;j++){
-          const v = grid[i*n + j];
-          const t = (v - mn)/(mx-mn + 1e-12);
-          const c1=[0,229,255], c2=[255,0,240], c3=[124,255,0];
-          let r,g,b; if(t<0.5){ const u=t*2; r=c1[0]*(1-u)+c2[0]*u; g=c1[1]*(1-u)+c2[1]*u; b=c1[2]*(1-u)+c2[2]*u; }
-          else { const u=(t-0.5)*2; r=c2[0]*(1-u)+c3[0]*u; g=c2[1]*(1-u)+c3[1]*u; b=c2[2]*(1-u)+c3[2]*u; }
-          const idx = (i*n + j)*4; img.data[idx+0]=r; img.data[idx+1]=g; img.data[idx+2]=b; img.data[idx+3]=255;
-        }
-      }
-      const off = new OffscreenCanvas(n,n); const octx = off.getContext('2d'); octx.putImageData(img,0,0);
-      ctx.imageSmoothingEnabled=false; ctx.drawImage(off,0,0,W,H);
-    }
+            function sorSweep() {
+                const ω = Math.max(0.1, Math.min(1.99, parseFloat(omegaSOR.value || 1.8)));
+                const s = sor;
+                const {U, n} = s;
+                // Un barrido sobre todos los interiores
+                for (let i = 1; i < n - 1; i++) {
+                    for (let j = 1; j < n - 1; j++) {
+                        const idx = i * n + j;
+                        const avg = 0.25 * (U[(i + 1) * n + j] + U[(i - 1) * n + j] + U[i * n + (j + 1)] + U[i * n + (j - 1)]);
+                        U[idx] = (1 - ω) * U[idx] + ω * avg;
+                    }
+                }
+                sor.iter++;
+                // Residuo relativo
+                const x = s.extractX();
+                const Ax = s.matvecVec(x);
+                let rr = 0,
+                    bb = 0;
+                for (let k = 0; k < s.N; k++) {
+                    const rk = s.b[k] - Ax[k];
+                    rr += rk * rk;
+                    bb += s.b[k] * s.b[k];
+                }
+                const rel = Math.sqrt(rr) / Math.max(1e-30, Math.sqrt(bb));
+                sor.hist.push(rel);
+                if (rel <= parseFloat(tolSOR.value || "1e-6") || sor.iter >= parseInt(maxItSOR.value || 5000)) sor.done = true;
+                iterKpiSOR.textContent = String(sor.iter);
+                resKpiSOR.textContent = rel < 1e-12 ? rel.toExponential(2) : rel.toFixed(6);
+                const ms = Math.max(0, performance.now() - sor.t0);
+                timeKpiSOR.textContent = `${ms.toFixed(0)} ms`;
+                drawHeatSOR();
+                drawChartSOR(sor.hist);
+            }
 
-    function drawChartSOR(hist){
-      const ctx = chartCanvasSOR.getContext('2d');
-      const W = chartCanvasSOR.clientWidth * devicePixelRatio;
-      const H = chartCanvasSOR.clientHeight * devicePixelRatio;
-      chartCanvasSOR.width = W; chartCanvasSOR.height = H;
-      ctx.clearRect(0,0,W,H);
-      ctx.strokeStyle='rgba(0,229,255,.6)'; ctx.lineWidth=2; ctx.strokeRect(10,10,W-20,H-20);
-      if(!hist || hist.length===0) return;
-      const y = hist.map(v=> Math.log10(Math.max(1e-20,v)));
-      const xmin=0, xmax=hist.length-1; let ymin=Infinity, ymax=-Infinity; for(const v of y){ if(v<ymin) ymin=v; if(v>ymax) ymax=v; }
-      if(ymin===ymax){ ymin-=1; ymax+=1; }
-      function X(i){ return 10 + (W-20)*( (i-xmin)/Math.max(1,xmax-xmin) ); }
-      function Y(v){ return 10 + (H-20)*(1-( (v-ymin)/(ymax-ymin) )); }
-      ctx.beginPath(); ctx.moveTo(X(0), Y(y[0])); for(let i=1;i<y.length;i++) ctx.lineTo(X(i), Y(y[i]));
-      ctx.strokeStyle='rgba(124,255,0,.9)'; ctx.lineWidth=3; ctx.shadowColor='rgba(124,255,0,.6)'; ctx.shadowBlur=10; ctx.stroke();
-    }
+            function drawHeatSOR() {
+                const ctx = heatCanvasSOR.getContext("2d");
+                const W = heatCanvasSOR.clientWidth * devicePixelRatio;
+                const H = heatCanvasSOR.clientHeight * devicePixelRatio;
+                heatCanvasSOR.width = W;
+                heatCanvasSOR.height = H;
+                const n = sor.n;
+                const grid = sor.U;
+                // min/max
+                let mn = Infinity,
+                    mx = -Infinity;
+                for (let i = 0; i < grid.length; i++) {
+                    const v = grid[i];
+                    if (v < mn) mn = v;
+                    if (v > mx) mx = v;
+                }
+                const img = ctx.createImageData(n, n);
+                for (let i = 0; i < n; i++) {
+                    for (let j = 0; j < n; j++) {
+                        const v = grid[i * n + j];
+                        const t = (v - mn) / (mx - mn + 1e-12);
+                        const c1 = [0, 229, 255],
+                            c2 = [255, 0, 240],
+                            c3 = [124, 255, 0];
+                        let r, g, b;
+                        if (t < 0.5) {
+                            const u = t * 2;
+                            r = c1[0] * (1 - u) + c2[0] * u;
+                            g = c1[1] * (1 - u) + c2[1] * u;
+                            b = c1[2] * (1 - u) + c2[2] * u;
+                        } else {
+                            const u = (t - 0.5) * 2;
+                            r = c2[0] * (1 - u) + c3[0] * u;
+                            g = c2[1] * (1 - u) + c3[1] * u;
+                            b = c2[2] * (1 - u) + c3[2] * u;
+                        }
+                        const idx = (i * n + j) * 4;
+                        img.data[idx + 0] = r;
+                        img.data[idx + 1] = g;
+                        img.data[idx + 2] = b;
+                        img.data[idx + 3] = 255;
+                    }
+                }
+                const off = new OffscreenCanvas(n, n);
+                const octx = off.getContext("2d");
+                octx.putImageData(img, 0, 0);
+                ctx.imageSmoothingEnabled = false;
+                ctx.drawImage(off, 0, 0, W, H);
+            }
 
-    let animSOR=null;
-    function animateSOR(){
-      if(sor.done){ cancelAnimationFrame(animSOR); animSOR=null; return; }
-      const steps = Math.max(1, Math.min(50, parseInt(stepsPerFrameSOR.value||5)));
-      for(let t=0;t<steps;t++) sorSweep();
-      animSOR = requestAnimationFrame(animateSOR);
-    }
+            function drawChartSOR(hist) {
+                const ctx = chartCanvasSOR.getContext("2d");
+                const W = chartCanvasSOR.clientWidth * devicePixelRatio;
+                const H = chartCanvasSOR.clientHeight * devicePixelRatio;
+                chartCanvasSOR.width = W;
+                chartCanvasSOR.height = H;
+                ctx.clearRect(0, 0, W, H);
+                ctx.strokeStyle = "rgba(0,229,255,.6)";
+                ctx.lineWidth = 2;
+                ctx.strokeRect(10, 10, W - 20, H - 20);
+                if (!hist || hist.length === 0) return;
+                const y = hist.map((v) => Math.log10(Math.max(1e-20, v)));
+                const xmin = 0,
+                    xmax = hist.length - 1;
+                let ymin = Infinity,
+                    ymax = -Infinity;
+                for (const v of y) {
+                    if (v < ymin) ymin = v;
+                    if (v > ymax) ymax = v;
+                }
+                if (ymin === ymax) {
+                    ymin -= 1;
+                    ymax += 1;
+                }
+                function X(i) {
+                    return 10 + (W - 20) * ((i - xmin) / Math.max(1, xmax - xmin));
+                }
+                function Y(v) {
+                    return 10 + (H - 20) * (1 - (v - ymin) / (ymax - ymin));
+                }
+                ctx.beginPath();
+                ctx.moveTo(X(0), Y(y[0]));
+                for (let i = 1; i < y.length; i++) ctx.lineTo(X(i), Y(y[i]));
+                ctx.strokeStyle = "rgba(124,255,0,.9)";
+                ctx.lineWidth = 3;
+                ctx.shadowColor = "rgba(124,255,0,.6)";
+                ctx.shadowBlur = 10;
+                ctx.stroke();
+            }
 
-    runBtnSOR.addEventListener('click', ()=>{ if(!sor.U) setupSOR(); if(animSOR) cancelAnimationFrame(animSOR); animSOR=requestAnimationFrame(animateSOR); });
-    stepBtnSOR.addEventListener('click', ()=>{ if(!sor.U) setupSOR(); if(animSOR) cancelAnimationFrame(animSOR); sorSweep(); });
-    resetBtnSOR.addEventListener('click', ()=>{ if(animSOR) cancelAnimationFrame(animSOR); setupSOR(); });
+            let animSOR = null;
+            function animateSOR() {
+                if (sor.done) {
+                    cancelAnimationFrame(animSOR);
+                    animSOR = null;
+                    return;
+                }
+                const steps = Math.max(1, Math.min(50, parseInt(stepsPerFrameSOR.value || 5)));
+                for (let t = 0; t < steps; t++) sorSweep();
+                animSOR = requestAnimationFrame(animateSOR);
+            }
 
-    // Inicializar SOR al cargar
-    setupSOR();
-  </script>
-</body>
+            runBtnSOR.addEventListener("click", () => {
+                if (!sor.U) setupSOR();
+                if (animSOR) cancelAnimationFrame(animSOR);
+                animSOR = requestAnimationFrame(animateSOR);
+            });
+            stepBtnSOR.addEventListener("click", () => {
+                if (!sor.U) setupSOR();
+                if (animSOR) cancelAnimationFrame(animSOR);
+                sorSweep();
+            });
+            resetBtnSOR.addEventListener("click", () => {
+                if (animSOR) cancelAnimationFrame(animSOR);
+                setupSOR();
+            });
+
+            // Inicializar SOR al cargar
+            setupSOR();
+        </script>
+    </body>
 </html>
